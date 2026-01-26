@@ -19,26 +19,29 @@ Procedimiento de calibración
 5.- Presionar de nuevo el botón para hacer el cálculo de muestras, el robot se encuentra listo para el arranque.
 */
 
-#include <BarraSensores16.h>
-#include <Max14870.h>
+#include "BarraSensores16.h"
+#include "Max14870.h"
 
 /* Mapeo de pines */
 #define LEDS 48
+#define LED_RED 46
+#define LED_GREEN 0
+#define LED_BLUE 45
 #define GO 17
 #define BUTTON 7
 
 // #define DEBUG /* Para debuggear el código descomentamos esta línea */
 
 /* Constantes para PID */
-const float KP = 0.05;      // 0.01;
-const float KI = 0.007;     //.006s
-const float KD = 1.0;       // 1.0;
+const float KP = 0.065;      // 0.01;
+const float KI = 0.008;     //.006s
+const float KD = 0.9;       // 1.0;
 const int SETPOINT = 3750;  // Setpoint (Como utilizamos 16 sensores, la línea debe estar entre 0 y 1500, por lo que el ideal es que esté en 750)
 
 /* Regulación de la velocidad Máxima */
-const int MAX_SPEED = 120;  //Máximo 1023 nieveles
+const int MAX_SPEED = 130;  //Máximo 1023 nieveles
 const int MIN_SPEED = -1 * MAX_SPEED;
-const int BRAKE_SPEED = 180;
+const int BRAKE_SPEED = 200;
 
 /* constante para valor máximo del diff */
 const int MAX_DIFF = 1000;
@@ -62,38 +65,48 @@ PuenteH puenteH;
 BarraSensores16 barraSensores;
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(115200);
+#endif
 
   /* Declaramos como salida los pines utilizados */
   pinMode(LEDS, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_BLUE, OUTPUT);
+
   pinMode(GO, INPUT);
   pinMode(BUTTON, INPUT);
+
+  digitalWrite(LED_RED, HIGH);
+  digitalWrite(LED_GREEN, HIGH);
+  digitalWrite(LED_BLUE, HIGH);
 
   /* Iniciamos el proceso de calibración */
   waitButton();
 
-  digitalWrite(LEDS, HIGH);
+  digitalWrite(LED_RED, LOW);
   delay(2000);
   barraSensores.leer_blanco();  // Poner sensores en blanco
   Serial.println("Lectura de blanco correctas");
-  digitalWrite(LEDS, LOW);
+  digitalWrite(LED_RED, HIGH);
 
   waitButton();  // Presionar botón
 
-  digitalWrite(LEDS, HIGH);
+  digitalWrite(LED_RED, LOW);
   delay(2000);
   barraSensores.leer_negro();  // Poner sensores en negro
   Serial.println("Lectura de negro correctas");
-  digitalWrite(LEDS, LOW);
+  digitalWrite(LED_RED, HIGH);
 
   waitButton();  // Presionar botón
 
-  digitalWrite(LEDS, HIGH);
+  digitalWrite(LED_BLUE, LOW);
   barraSensores.Calcula_muestras();  // Calcular las muestras
   for (int i = 0; i < 5; i++) {
-    digitalWrite(LEDS, HIGH);
+    digitalWrite(LED_BLUE, LOW);
     delay(100);
-    digitalWrite(LEDS, LOW);
+    digitalWrite(LED_BLUE, HIGH);
     delay(100);
   }
 
@@ -101,7 +114,8 @@ void setup() {
   waitGo();  // Control de arranque
 #endif
 
-  digitalWrite(LEDS, LOW);
+  digitalWrite(LED_BLUE, HIGH);
+  digitalWrite(LED_GREEN, LOW);
 }
 
 void loop() {
@@ -110,7 +124,7 @@ void loop() {
   }
   puenteH.motores(0, 0);
 
-  digitalWrite(LEDS, LOW);
+  digitalWrite(LED_GREEN, LOW);
 }
 
 // Esperar por módulo de arranque
